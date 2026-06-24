@@ -307,3 +307,101 @@ class UI:
         text_surface = font.render(text, True, color)
         rect = text_surface.get_rect(center=(self.window_width // 2, y))
         surface.blit(text_surface, rect)
+
+    def draw_victory_screen(self, surface):
+        """战胜牛魔王后的全屏胜利结算画面，仿开始画面风格。"""
+        import random
+
+        # ① 黎明渐变天空：深紫蓝 → 暖橙 → 浅金
+        for row in range(self.window_height):
+            t = row / max(1, self.window_height - 1)
+            if t < 0.55:
+                # 上半部：深紫蓝 → 暖橙过渡
+                p = t / 0.55
+                r = int(15 + p * 170)
+                g = int(12 + p * 90)
+                b = int(50 - p * 10)
+            else:
+                # 下半部：暖橙 → 浅金
+                p = (t - 0.55) / 0.45
+                r = int(185 + p * 55)
+                g = int(102 + p * 100)
+                b = int(40 + p * 60)
+            pygame.draw.line(surface, (r, g, b), (0, row), (self.window_width, row))
+
+        # ② 残星（30颗，天将明渐隐）
+        rng = random.Random(88)
+        for _ in range(30):
+            x = rng.randint(20, self.window_width - 20)
+            y = rng.randint(10, self.window_height // 3)
+            size = rng.randint(1, 2)
+            alpha = rng.randint(80, 180)
+            star_surf = pygame.Surface((size * 2 + 2, size * 2 + 2), pygame.SRCALPHA)
+            pygame.draw.circle(star_surf, (255, 248, 210, alpha), (size + 1, size + 1), size)
+            surface.blit(star_surf, (x - size, y - size))
+
+        # ③ 金色光晕（朝阳，替代月亮）
+        glow_cx, glow_cy = self.window_width // 2, 170
+        glow_surf = pygame.Surface((260, 260), pygame.SRCALPHA)
+        for radius, alpha in [(120, 35), (90, 60), (60, 100), (35, 160)]:
+            color = (255, 220, 100, alpha)
+            pygame.draw.circle(glow_surf, color, (130, 130), radius)
+        surface.blit(glow_surf, (glow_cx - 130, glow_cy - 130))
+
+        # ④ 远山剪影（暖深色）
+        mountain_color1 = (45, 28, 35)
+        points1 = [
+            (0, self.window_height), (0, 430),
+            (100, 390), (220, 410), (340, 360), (460, 395),
+            (580, 330), (720, 375), (self.window_width, 400),
+            (self.window_width, self.window_height),
+        ]
+        pygame.draw.polygon(surface, mountain_color1, points1)
+
+        mountain_color2 = (32, 20, 28)
+        points2 = [
+            (0, self.window_height), (0, 460),
+            (140, 435), (280, 455), (420, 425), (550, 450),
+            (680, 415), (self.window_width, 445),
+            (self.window_width, self.window_height),
+        ]
+        pygame.draw.polygon(surface, mountain_color2, points2)
+
+        # ⑤ 金色装饰线
+        line_y = 115
+        line_width = 160
+        for offset in range(line_width):
+            t_val = abs(offset - line_width // 2) / (line_width // 2)
+            alpha = int(200 * (1 - t_val))
+            c = (255 - int(100 * t_val), 220 - int(120 * t_val), 100, alpha)
+            dot_surf = pygame.Surface((2, 2), pygame.SRCALPHA)
+            dot_surf.fill(c)
+            surface.blit(dot_surf, (self.window_width // 2 - line_width // 2 + offset, line_y))
+
+        # ⑥ 标题
+        self._draw_center_text(surface, self.title_font, "✦ 战 斗 胜 利 ✦", 140, (255, 235, 155))
+
+        # ⑦ 副标题
+        self._draw_center_text(surface, self.large_font, "—— 降妖记 · 圆满 ——", 190, (240, 220, 165))
+
+        # ⑧ 剧情文字（半透明文本条）
+        narrative = [
+            "牛魔王已败，观音院上空妖气尽散。",
+            "院中被囚禁的禅师们纷纷获救，双手合十，连声称谢。",
+            "山下的村民遥望寺院，只见祥云缭绕，知是大圣功成。",
+            "自此，观音院重归清净，这方圆百里的百姓，又过上了太平日子。",
+        ]
+        text_start_y = 240
+        for i, line in enumerate(narrative):
+            y = text_start_y + i * 50
+            # 半透明文本条背景
+            lw = self.small_font.size(line)[0] + 36
+            lh = 36
+            bg = pygame.Surface((lw, lh), pygame.SRCALPHA)
+            bg.fill((0, 0, 0, 110))
+            pygame.draw.rect(bg, (200, 180, 110, 70), bg.get_rect(), 1)
+            surface.blit(bg, ((self.window_width - lw) // 2, y))
+            self._draw_center_text(surface, self.small_font, line, y + lh // 2, (240, 235, 215))
+
+        # ⑨ 底部按钮提示
+        self._draw_button_hint(surface, "ok", "按 E / 空格 继续", self.window_height - 90)

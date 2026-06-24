@@ -17,14 +17,35 @@ class QuestManager:
     避免剧情逻辑散落在交互代码里。
     """
 
+    # 土地公多句台词，其他 NPC 保持单句兼容
+    GOD_DIALOGS = {
+        QuestStage.NOT_ACCEPTED: [
+            "老朽乃此方土地，守护这村庄已有三百余年了。",
+            "近日观音院妖气冲天，院中禅师皆被妖怪掳去，香火断绝，唉……",
+            "大圣若肯出手降妖，老朽代全村老小先行谢过！出了村往东走便是观音院。",
+        ],
+        QuestStage.ACCEPTED: [
+            "大圣果然义薄云天！老朽在此静候佳音。",
+            "观音院中妖怪不少，听闻还有个厉害的牛魔王坐镇，大圣千万小心。",
+        ],
+        QuestStage.CLEARED: [
+            "大圣回来了！看您气色不错，战况如何？",
+            "好好好！老朽就知道大圣出手，妖邪必除。",
+        ],
+        QuestStage.RETURNED: [
+            "大圣辛苦了！快让老朽看看有没有受伤……嗯，毫发无伤，果然是齐天大圣！",
+            "观音院的禅师们都平安吗？太好了，这都是大圣的功劳。",
+            "大圣且在村中歇息几日，老朽这就去安排庆功之事！",
+        ],
+        QuestStage.COMPLETE: [
+            "大圣，自您降妖之后，观音院已重开山门，香火又旺了起来。",
+            "村里的老少都说，多亏了齐天大圣，才保得一方平安。",
+            "大圣此去西行路远，老朽在此祝您一路顺风，他日再会！",
+        ],
+    }
+
     DIALOGS = {
-        "god": {
-            QuestStage.NOT_ACCEPTED: "大圣，观音院近日妖气缠身，恳请您前去降妖除魔！",
-            QuestStage.ACCEPTED: "观音院就在前方，万望大圣多加小心。",
-            QuestStage.CLEARED: "观音院就在前方，万望大圣多加小心。",
-            QuestStage.RETURNED: "大圣可是降妖归来？快与老朽说说经过。",
-            QuestStage.COMPLETE: "妖患已除，观音院重归安宁，多谢大圣！",
-        },
+        "god": None,
         "guard": {
             QuestStage.NOT_ACCEPTED: "这林子最近不安宁，妖怪的巡逻队经常出没。你若要过路，先去村里找土地公打听清楚吧。",
             QuestStage.ACCEPTED: "哦？大圣接了土地公的差事？好！沿这条小路一直往东走就能到观音院。路上的妖怪交给你，林子我来守。",
@@ -57,6 +78,7 @@ class QuestManager:
 
     def __init__(self):
         self.stage = QuestStage.NOT_ACCEPTED
+        self.dialog_index = 0
 
     def accept(self):
         if self.stage == QuestStage.NOT_ACCEPTED:
@@ -86,8 +108,45 @@ class QuestManager:
     def is_complete(self):
         return self.stage == QuestStage.COMPLETE
 
+    def next_dialog(self, layer_name):
+        """返回当前阶段的下一句台词；多句播完后返回 None。"""
+        if layer_name == "god":
+            lines = self.GOD_DIALOGS.get(self.stage, [])
+            if self.dialog_index < len(lines):
+                text = lines[self.dialog_index]
+                self.dialog_index += 1
+                return text
+            return None
+
+        stage_dialogs = self.DIALOGS.get(layer_name)
+        if not stage_dialogs:
+            return None
+        return stage_dialogs.get(self.stage)
+
+    def reset_dialog_index(self):
+        self.dialog_index = 0
+
+    def current_dialog(self, layer_name):
+        """返回当前阶段正在显示的台词（不改变 index），用于每帧渲染。"""
+        if layer_name == "god":
+            lines = self.GOD_DIALOGS.get(self.stage, [])
+            if self.dialog_index < len(lines):
+                return lines[self.dialog_index]
+            return None
+        stage_dialogs = self.DIALOGS.get(layer_name)
+        if not stage_dialogs:
+            return None
+        return stage_dialogs.get(self.stage)
+
     def dialog_for(self, layer_name):
-        """返回当前阶段下该 NPC 的台词，没有阶段台词时返回 None（由调用方回退到默认台词）。"""
+        """返回当前阶段下该 NPC 的台词，没有阶段台词时返回 None。"""
+        if layer_name == "god":
+            lines = self.GOD_DIALOGS.get(self.stage, [])
+            if lines:
+                self.dialog_index = 0
+                return lines[0]
+            return None
+
         stage_dialogs = self.DIALOGS.get(layer_name)
         if not stage_dialogs:
             return None

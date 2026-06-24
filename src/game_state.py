@@ -10,5 +10,6 @@ class GameState(Enum):
     TEMPLE_EXPLORING = auto()
     BATTLE = auto()
     BATTLE_VICTORY = auto()
+    NARRATIVE = auto()
     COMPLETE = auto()
     FAILED = auto()

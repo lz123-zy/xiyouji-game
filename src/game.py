@@ -90,6 +90,7 @@ class Game:
         self.failure_message_visible = False
         self.failure_reason = None
         self.boss_banner_timer = 0.0
+        self.narrative_visible = False
         self.camera.update(self.player.rect)
 
         if self.player.load_error:
@@ -223,6 +224,8 @@ class Game:
                 self._handle_complete_event(event)
             elif self.failure_message_visible:
                 self._handle_failure_event(event)
+            elif self.narrative_visible:
+                self._handle_narrative_event(event)
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
                 self._pause()
             elif self.battle:
@@ -273,6 +276,13 @@ class Game:
         elif event.key == pygame.K_ESCAPE:
             self.running = False
 
+    def _handle_narrative_event(self, event):
+        if event.type != pygame.KEYDOWN:
+            return
+        if event.key in (pygame.K_e, pygame.K_SPACE):
+            self.narrative_visible = False
+            self._return_to_outskirts()
+
     def _pause(self):
         self.paused_state = self.state
         self.state = GameState.PAUSED
@@ -319,7 +329,7 @@ class Game:
                 print(f"Battle effect load failed, continuing without effect: {self.battle.effect_error}")
             if self.battle.attack_animation_error:
                 print(
-                    "SWK2 attack animation load failed, continuing without it: "
+                    "SWK attack animation load failed, continuing without it: "
                     f"{self.battle.attack_animation_error}"
                 )
         else:
@@ -328,7 +338,7 @@ class Game:
 
     def _handle_interact(self):
         if self.active_npc:
-            self._close_dialog()
+            self._advance_dialog()
             return
 
         if self._can_return_to_village():
@@ -349,9 +359,21 @@ class Game:
 
         self.active_npc = self._nearby_npc()
 
+    def _advance_dialog(self):
+        npc = self.active_npc
+        if npc is None:
+            return
+        if npc.layer_name == "god":
+            next_text = self.quest.next_dialog("god")
+            if next_text is None:
+                self._close_dialog()
+        else:
+            self._close_dialog()
+
     def _close_dialog(self):
         npc = self.active_npc
         self.active_npc = None
+        self.quest.reset_dialog_index()
         if not self._is_temple_gate_npc(npc):
             return
 
@@ -477,7 +499,7 @@ class Game:
                 self._check_final_completion()
             return
 
-        if self.complete_message_visible or self.failure_message_visible:
+        if self.complete_message_visible or self.failure_message_visible or self.narrative_visible:
             self._sync_state()
             return
 
@@ -522,9 +544,13 @@ class Game:
                 break
 
     def _check_final_completion(self):
+        if self.narrative_visible or self.complete_message_visible:
+            return
         if self.scene.name == "temple" and not self.scene.active_monsters:
             if not self.scene.boss_spawned:
                 self._spawn_boss()
+            elif not self.quest.should_return_to_village:
+                self.narrative_visible = True
             else:
                 self.quest.clear_monsters()
         self._sync_state()
@@ -549,6 +575,8 @@ class Game:
             self.state = GameState.FAILED
         elif self.complete_message_visible or self.quest.is_complete:
             self.state = GameState.COMPLETE
+        elif self.narrative_visible:
+            self.state = GameState.NARRATIVE
         elif self.battle and self.battle.victory:
             self.state = GameState.BATTLE_VICTORY
         elif self.battle:
@@ -581,7 +609,7 @@ class Game:
             self.dialog_box.draw(
                 self.screen,
                 self.active_npc,
-                self.quest.dialog_for(self.active_npc.layer_name),
+                self.quest.current_dialog(self.active_npc.layer_name),
             )
         if self.battle:
             self.battle.draw(self.screen)
@@ -595,6 +623,8 @@ class Game:
             self.ui.draw_return_prompt(self.screen, "按 E / 空格 回到村庄复命")
         if self.boss_banner_timer > 0:
             self.ui.draw_banner(self.screen, "妖王 牛魔王 现身！")
+        if self.narrative_visible:
+            self.ui.draw_victory_screen(self.screen)
         if self.complete_message_visible:
             self._draw_complete_overlay()
         if self.failure_message_visible:

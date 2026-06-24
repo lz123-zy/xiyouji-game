@@ -1,6 +1,5 @@
 import pygame
 
-from .animation import Animation
 from .settings import (
     BATTLE_EFFECT_FRAME_LIMIT,
     BATTLE_EFFECT_FRAME_TIME,
@@ -10,11 +9,7 @@ from .settings import (
     MONSTER_FIRST_ATTACK_DELAY,
     PLAYER_ATTACK_DAMAGE,
     PLAYER_MAX_HEALTH,
-    SWK2_ATTACK_FRAME_COUNT,
-    SWK2_ATTACK_FRAME_START,
-    SWK2_ATTACK_FRAME_TIME,
-    SWK2_BATTLE_SCALE,
-    SWK2_DIR,
+    SWK_DIR,
 )
 
 
@@ -36,8 +31,7 @@ class Battle:
         self.effect_time = 0.0
         self.effect_active = False
         self.attack_animation_error = None
-        self.attack_frame_paths = []
-        self.attack_animation = self._load_attack_animation()
+        self.attack_frames = self._load_attack_frames()
         self.attack_active = False
         self.title_font = self._load_font(font_path, 36)
         self.text_font = self._load_font(font_path, 24)
@@ -63,32 +57,30 @@ class Battle:
             self.effect_error = str(exc)
         return frames
 
-    def _load_attack_animation(self):
+    def _load_attack_frames(self):
+        """加载探索风格的孙悟空下行帧作为战斗形象。"""
+        BATTLE_SCALE = 0.85
+        frames = []
         try:
-            paths = sorted(SWK2_DIR.glob("*.png"))
-            start = max(0, SWK2_ATTACK_FRAME_START - 1)
-            selected = paths[start:start + SWK2_ATTACK_FRAME_COUNT]
-            if not selected:
-                raise FileNotFoundError(f"no swk2 attack frames found in {SWK2_DIR}")
-
-            frames = []
-            for path in selected:
-                image = pygame.image.load(path).convert_alpha()
-                width = max(1, round(image.get_width() * SWK2_BATTLE_SCALE))
-                height = max(1, round(image.get_height() * SWK2_BATTLE_SCALE))
-                frames.append(pygame.transform.smoothscale(image, (width, height)))
-
-            self.attack_frame_paths = selected
-            return Animation(frames, SWK2_ATTACK_FRAME_TIME, loop=False)
+            for name in ["00000.tga", "00001.tga", "00002.tga", "00003.tga"]:
+                image = pygame.image.load(SWK_DIR / name).convert_alpha()
+                w = max(1, round(image.get_width() * BATTLE_SCALE))
+                h = max(1, round(image.get_height() * BATTLE_SCALE))
+                frames.append(pygame.transform.smoothscale(image, (w, h)))
         except Exception as exc:
             self.attack_animation_error = str(exc)
-            return None
+            placeholder = pygame.Surface((60, 90), pygame.SRCALPHA)
+            placeholder.fill((220, 70, 70))
+            frames = [placeholder]
+        self._attack_frame_index = 0
+        self._attack_frame_timer = 0.0
+        return frames
 
     def attack(self):
         if self.victory or self.finished or self.player_defeated:
             return None
 
-        if self.attack_active and self.attack_animation and not self.attack_animation.finished:
+        if self.attack_active and self._attack_frame_timer <= 0 and self._attack_frame_index >= len(self.attack_frames):
             return None
 
         self._start_attack_animation()
@@ -154,45 +146,75 @@ class Battle:
                 self.effect_index = 0
 
     def _start_attack_animation(self):
-        if not self.attack_animation:
-            return
-
-        self.attack_animation.reset()
         self.attack_active = True
+        self._attack_frame_index = 0
+        self._attack_frame_timer = 0.0
 
     def _update_attack_animation(self, dt):
-        if not self.attack_active or not self.attack_animation:
+        if not self.attack_active:
             return
-
-        self.attack_animation.update(dt)
-        if self.attack_animation.finished:
+        self._attack_frame_timer -= dt
+        if self._attack_frame_timer > 0:
+            return
+        self._attack_frame_index += 1
+        self._attack_frame_timer = 0.1
+        if self._attack_frame_index >= len(self.attack_frames):
             self.attack_active = False
+            self._attack_frame_index = 0
 
     def draw(self, surface):
         overlay = pygame.Surface((self.window_width, self.window_height), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 165))
         surface.blit(overlay, (0, 0))
 
-        panel = pygame.Rect(80, 92, self.window_width - 160, 300)
-        pygame.draw.rect(surface, (24, 24, 32), panel)
-        pygame.draw.rect(surface, (232, 214, 160), panel, 3)
+        panel = pygame.Rect(60, 72, self.window_width - 120, 340)
 
-        title = "战斗胜利" if self.victory else f"遭遇{self.monster.title}"
-        self._blit_text(surface, self.title_font, title, panel.left + 28, panel.top + 26, (255, 232, 150))
-        self._draw_player(surface, panel)
-        self._draw_monster(surface, panel)
+        # 双层边框：外层半透明深色 + 内层金色
+        outer = panel.inflate(8, 8)
+        pygame.draw.rect(surface, (0, 0, 0, 120), outer, border_radius=10)
+        pygame.draw.rect(surface, (30, 30, 42), panel, border_radius=8)
+        pygame.draw.rect(surface, (210, 180, 120), panel, 2, border_radius=8)
 
-        y = panel.top + 92
-        self._draw_health_bar(surface, "玩家血量", self.player_health, PLAYER_MAX_HEALTH, panel.left + 32, y)
+        # 标题
+        if self.victory:
+            title = "战斗胜利"
+            title_color = (120, 255, 120)
+        elif self.player_defeated:
+            title = "战斗失败"
+            title_color = (255, 100, 100)
+        else:
+            title = f"遭遇{self.monster.title}"
+            title_color = (255, 232, 150)
+        self._blit_text(surface, self.title_font, title, panel.left + 28, panel.top + 20, title_color)
+
+        # 分割线
+        sep_y = panel.top + 62
+        pygame.draw.line(surface, (80, 75, 60), (panel.left + 20, sep_y), (panel.right - 20, sep_y), 1)
+
+        # 血条区域
+        bar_x = panel.left + 28
+        bar_w = panel.width - 56
+        self._draw_health_bar(surface, "玩家血量", self.player_health, PLAYER_MAX_HEALTH, bar_x, panel.top + 72, bar_w)
         self._draw_health_bar(
             surface,
             "怪物血量",
             self.monster.health,
             self.monster.max_health,
-            panel.left + 32,
-            y + 64,
+            bar_x,
+            panel.top + 132,
+            bar_w,
         )
 
+        # 怪物名字标签
+        name_surf = self.text_font.render(self.monster.title, True, (220, 180, 140))
+        name_rect = name_surf.get_rect(centerx=panel.right - 112, top=panel.top + 196)
+        surface.blit(name_surf, name_rect)
+
+        # 角色
+        self._draw_player(surface, panel)
+        self._draw_monster(surface, panel)
+
+        # 底部提示文字
         if self.victory:
             hint = "战斗胜利，正在返回寺庙。"
         elif getattr(self.monster, "enraged", False):
@@ -201,20 +223,53 @@ class Battle:
             hint = "妖怪反击,损失血量!按 J 反击,按 Esc 撤退。"
         else:
             hint = "按 J 攻击妖怪，按 Esc 撤退。当心妖怪反击！"
-        self._blit_text(surface, self.text_font, hint, panel.left + 32, panel.bottom - 64, (245, 245, 245))
+        self._blit_text(surface, self.text_font, hint, panel.left + 28, panel.bottom - 38, (245, 245, 245))
 
-    def _draw_health_bar(self, surface, label, value, maximum, x, y):
+    def _draw_health_bar(self, surface, label, value, maximum, x, y, width):
+        ratio = max(0, value) / maximum if maximum else 0
+
+        # 动态颜色：绿 → 黄 → 红
+        if ratio >= 0.6:
+            bar_color = (60, 190, 80)
+        elif ratio >= 0.3:
+            bar_color = (220, 190, 50)
+        else:
+            bar_color = (200, 55, 55)
+
         self._blit_text(surface, self.text_font, f"{label}: {value}/{maximum}", x, y, (245, 245, 245))
-        bar_rect = pygame.Rect(x + 150, y + 6, 300, 18)
-        pygame.draw.rect(surface, (70, 70, 80), bar_rect)
-        fill_width = round(bar_rect.width * max(0, value) / maximum)
-        if fill_width:
-            pygame.draw.rect(surface, (190, 54, 54), (bar_rect.x, bar_rect.y, fill_width, bar_rect.height))
-        pygame.draw.rect(surface, (230, 230, 230), bar_rect, 2)
+
+        # 血条背景（圆角）
+        bar_rect = pygame.Rect(x, y + 30, width, 22)
+        pygame.draw.rect(surface, (50, 50, 58), bar_rect, border_radius=6)
+
+        # 填充
+        fill_w = round(bar_rect.width * ratio)
+        if fill_w > 0:
+            fill_rect = pygame.Rect(bar_rect.x, bar_rect.y, fill_w, bar_rect.height)
+            pygame.draw.rect(surface, bar_color, fill_rect, border_radius=6)
+
+        # 内阴影（顶部高光）
+        highlight = pygame.Surface((bar_rect.width, 4), pygame.SRCALPHA)
+        pygame.draw.rect(highlight, (255, 255, 255, 30), (0, 0, bar_rect.width, 4), border_radius=4)
+        surface.blit(highlight, bar_rect.topleft)
+
+        # 边框
+        pygame.draw.rect(surface, (180, 180, 180), bar_rect, 1, border_radius=6)
+
+        # 百分比文字
+        pct = f"{round(ratio * 100)}%"
+        pct_surf = self.text_font.render(pct, True, (220, 220, 220))
+        surface.blit(pct_surf, (bar_rect.right + 10, bar_rect.y + 2))
 
     def _draw_monster(self, surface, panel):
-        monster_rect = self.monster.image.get_rect(midbottom=(panel.right - 112, panel.bottom - 48))
-        surface.blit(self.monster.image, monster_rect)
+        monster_rect = self.monster.image.get_rect(midbottom=(panel.right - 112, panel.bottom - 28))
+        # 放大怪物形象
+        img = self.monster.image
+        new_w = max(1, round(img.get_width() * 1.3))
+        new_h = max(1, round(img.get_height() * 1.3))
+        scaled = pygame.transform.smoothscale(img, (new_w, new_h))
+        monster_rect = scaled.get_rect(midbottom=(panel.right - 112, panel.bottom - 28))
+        surface.blit(scaled, monster_rect)
 
         if self.effect_active and self.effect_frames:
             effect = self.effect_frames[self.effect_index]
@@ -222,14 +277,17 @@ class Battle:
             surface.blit(effect, effect_rect)
 
     def _draw_player(self, surface, panel):
-        player_anchor = (panel.left + 108, panel.bottom - 22)
-        if self.attack_animation:
-            image = self.attack_animation.current_frame
-            player_rect = image.get_rect(midbottom=player_anchor)
-            surface.blit(image, player_rect)
+        player_anchor = (panel.left + 112, panel.bottom - 28)
+        if self.attack_active:
+            image = self.attack_frames[self._attack_frame_index]
         else:
-            player_rect = pygame.Rect(0, 0, 90, 130)
-            player_rect.midbottom = player_anchor
+            image = self.attack_frames[0]
+        # 放大玩家形象
+        new_w = max(1, round(image.get_width() * 1.3))
+        new_h = max(1, round(image.get_height() * 1.3))
+        scaled = pygame.transform.smoothscale(image, (new_w, new_h))
+        player_rect = scaled.get_rect(midbottom=player_anchor)
+        surface.blit(scaled, player_rect)
 
         if self.hit_flash_timer > 0:
             flash = pygame.Surface(player_rect.size, pygame.SRCALPHA)
