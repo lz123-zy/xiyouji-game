@@ -1,0 +1,42 @@
+{
+    "monsters": {
+        "cattle_guard": {
+            "name": "黑熊精手下",
+            "type": "cattle",
+            "hp": 60,
+            "atk": 18,
+            "defense": 8,
+            "exp": 40,
+            "skills": ["claw_swipe"]
+        },
+        "black_bear_boss": {
+            "name": "黑熊精",
+            "type": "cattle",
+            "hp": 150,
+            "atk": 30,
+            "defense": 15,
+            "exp": 200,
+            "skills": ["claw_swipe", "dark_breath", "fury_strike"]
+        }
+    },
+    "skills": {
+        "claw_swipe": {
+            "name": "利爪横扫",
+            "power": 110,
+            "mp_cost": 0,
+            "description": "用锋利的爪子横扫敌人"
+        },
+        "dark_breath": {
+            "name": "黑烟吐息",
+            "power": 130,
+            "mp_cost": 10,
+            "description": "喷吐黑烟，迷人心智"
+        },
+        "fury_strike": {
+            "name": "狂暴一击",
+            "power": 180,
+            "mp_cost": 20,
+            "description": "聚集全身力量的重击"
+        }
+    }
+}

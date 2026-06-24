@@ -1,0 +1,163 @@
+{
+    "dialogs": {
+        "elder1_greeting": {
+            "speaker": "土地公",
+            "text": "大圣！您可算来了！贫道是此地的土地公。自从那黑风山的妖怪占据了观音院，这一带的百姓日夜不得安宁啊！",
+            "next": "elder1_intro",
+            "event": "SET_FLAG",
+            "event_arg": "met_elder1"
+        },
+        "elder1_intro": {
+            "speaker": "孙悟空",
+            "text": "俺老孙陪师父西行至此，路过这观音院，怎会生出这般变故？你且细细说来。",
+            "next": "elder1_story"
+        },
+        "elder1_story": {
+            "speaker": "土地公",
+            "text": "回大圣，那观音院本是金池长老的道场。前些日子，不知从何处来了一伙妖怪，为首的是一只黑熊精，法力高强，将金池长老赶出了寺院，霸占了观音院！",
+            "options": [
+                {"text": "黑熊精？让我去会会他！", "next": "elder1_fight"},
+                {"text": "这黑熊精有什么本事？", "next": "elder1_info"}
+            ]
+        },
+        "elder1_fight": {
+            "speaker": "孙悟空",
+            "text": "区区黑熊精，也敢在观音院撒野？老孙这就去收拾了他！",
+            "next": "elder1_directions",
+            "event": "SET_FLAG",
+            "event_arg": "ready_to_fight"
+        },
+        "elder1_info": {
+            "speaker": "土地公",
+            "text": "那黑熊精使得一手好棍法，还会喷吐黑烟迷人心智。大圣若要去，需得万分小心！观音院就在东北方向，穿过山林便到。",
+            "next": "elder1_directions",
+            "event": "SET_FLAG",
+            "event_arg": "got_info"
+        },
+        "elder1_directions": {
+            "speaker": "土地公",
+            "text": "大圣请往东北方向走，穿过前面的树林就能看到观音院的山门了。若有需要，小神随时在此候命。",
+            "next": "elder1_end"
+        },
+        "elder1_end": {
+            "speaker": "孙悟空",
+            "text": "好！俺老孙去也！",
+            "next": "",
+            "event": "SWITCH_SCENE",
+            "event_arg": "temple"
+        },
+
+        "elder2_greeting": {
+            "speaker": "土地公",
+            "text": "大圣！前面就是观音院了！切记，那黑熊精神通广大，不可轻敌啊！",
+            "next": "elder2_end"
+        },
+        "elder2_end": {
+            "speaker": "孙悟空",
+            "text": "多谢土地公提醒，老孙自有分寸！",
+            "next": ""
+        },
+
+        "elder3_greeting": {
+            "speaker": "老村长",
+            "text": "这位大侠，您看着面生...可是从东土大唐来的？",
+            "options": [
+                {"text": "正是，贫僧是唐三藏的徒弟孙悟空。", "next": "elder3_confirm"},
+                {"text": "路过此地，打听一下观音院怎么走。", "next": "elder3_directions"}
+            ]
+        },
+        "elder3_confirm": {
+            "speaker": "老村长",
+            "text": "原来是齐天大圣！小老儿有眼不识泰山！观音院就在村子东北方，不过...近来那里不太平啊...",
+            "next": "elder3_advice"
+        },
+        "elder3_directions": {
+            "speaker": "老村长",
+            "text": "出村往东北方向走就是观音院了。不过最近那里闹妖怪，大侠可要小心呐！",
+            "next": "elder3_advice"
+        },
+        "elder3_advice": {
+            "speaker": "老村长",
+            "text": "您若要去，最好先在村里找土地公问问情况，他比我们这些凡人多知道些内情。",
+            "next": ""
+        },
+
+        "elder4_greeting": {
+            "speaker": "游方僧人",
+            "text": "阿弥陀佛！施主可是要去观音院？老衲劝你莫要前行，那里已经被妖怪占了去了！",
+            "next": "elder4_end"
+        },
+        "elder4_end": {
+            "speaker": "孙悟空",
+            "text": "哼！俺老孙最不怕的就是妖怪！老和尚你且在此等着，看我去降妖除魔！",
+            "next": "",
+            "event": "SET_FLAG",
+            "event_arg": "determined"
+        },
+
+        "temple_entrance": {
+            "speaker": "",
+            "text": "穿过层层密林，一座古朴庄严的寺庙出现在眼前。山门上书三个大字——「观音院」。但院中传来阵阵妖风，显然已非清修之地。",
+            "next": "temple_battle_trigger"
+        },
+        "temple_battle_trigger": {
+            "speaker": "黑熊精",
+            "text": "哈哈哈！又一个不知死活的和尚送上门来！小的们，给我拿下！",
+            "next": "",
+            "event": "START_BATTLE",
+            "event_arg": "cattle_guard"
+        },
+
+        "battle_victory": {
+            "speaker": "孙悟空",
+            "text": "哼！就这点本事也敢在观音院撒野？快叫你们大王出来！",
+            "next": ""
+        },
+        "battle_defeat": {
+            "speaker": "孙悟空",
+            "text": "咳咳...这妖怪果然厉害...俺老孙得先回去歇息一下...",
+            "next": ""
+        },
+
+        "god_greeting": {
+            "speaker": "观音菩萨",
+            "text": "悟空，你此行降妖有功。这黑熊精原是贫僧看管灵山的守山大神，因犯了天条被贬下界，在此为非作歹。望你手下留情，将他带回就好。",
+            "next": "god_end",
+            "event": "SET_FLAG",
+            "event_arg": "met_guanyin"
+        },
+        "god_end": {
+            "speaker": "孙悟空",
+            "text": "既是菩萨开口，老孙便饶他性命。待我将这孽畜擒来，交与菩萨发落！",
+            "next": "",
+            "event": "HEAL",
+            "event_arg": "full"
+        },
+
+        "boy1_greeting": {
+            "speaker": "村童",
+            "text": "大哥哥！你是来打妖怪的吗？我爹说妖怪就住在那边的大庙里！",
+            "next": ""
+        },
+        "girl1_greeting": {
+            "speaker": "村童",
+            "text": "大圣爷爷！能给我看看您的金箍棒吗？",
+            "next": ""
+        },
+        "girl2_greeting": {
+            "speaker": "村童",
+            "text": "大圣爷爷好威风！我也要学本领打妖怪！",
+            "next": ""
+        },
+        "boy2_greeting": {
+            "speaker": "村童",
+            "text": "山那边的庙里有妖怪！大圣爷爷小心啊！",
+            "next": ""
+        },
+        "girl3_greeting": {
+            "speaker": "村童",
+            "text": "听爷爷说观音菩萨会保佑我们的...",
+            "next": ""
+        }
+    }
+}

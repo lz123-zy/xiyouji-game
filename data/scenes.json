@@ -1,0 +1,36 @@
+{
+    "scenes": {
+        "village": {
+            "file": "village.tmx",
+            "name": "高老庄",
+            "description": "宁静的山村，村民们在此世代居住",
+            "bgm": "nmw.mp3",
+            "portals": [],
+            "spawns": {
+                "sun": "actor.sun",
+                "default": "actor.sun"
+            }
+        },
+        "temple": {
+            "file": "temple.tmx",
+            "name": "观音院",
+            "description": "古老的观世音菩萨道场，如今被妖怪占据",
+            "bgm": "aigei.mp3",
+            "portals": [],
+            "spawns": {
+                "default": "entrance",
+                "entrance": {"x": 200, "y": 1800}
+            }
+        },
+        "temple1": {
+            "file": "temple1.tmx",
+            "name": "观音院内殿",
+            "description": "观音院的内殿，黑熊精的巢穴",
+            "bgm": "aigei.mp3",
+            "portals": [],
+            "spawns": {
+                "default": "entrance"
+            }
+        }
+    }
+}
