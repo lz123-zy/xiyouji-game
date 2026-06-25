@@ -1,3 +1,6 @@
+"""通用帧动画控制器：按固定间隔切换帧，支持循环/单次播放。被 NPC、怪物等模块复用。"""
+
+
 class Animation:
     def __init__(self, frames, frame_time, loop=True):
         self.frames = frames
@@ -29,6 +32,7 @@ class Animation:
         if self.frame_index < len(self.frames):
             return
 
+        # 循环播放回到第一帧，单次播放则停在最后一帧
         if self.loop:
             self.frame_index = 0
         else:

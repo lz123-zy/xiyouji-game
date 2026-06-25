@@ -1,3 +1,4 @@
+"""玩家角色（孙悟空）：四向移动、帧动画播放、分轴碰撞检测。"""
 from pathlib import Path
 
 import pygame
@@ -81,16 +82,27 @@ class Player(pygame.sprite.Sprite):
         if dx == 0 and dy == 0:
             return
 
-        old_position = self.position.copy()
-        self.position.x += dx
-        self.position.y += dy
-        self.hitbox = self._make_hitbox()
-        self._clamp_hitbox_to_map(map_size)
-        self.hitbox = self._make_hitbox()
-
-        if self._collides(obstacle_rects):
-            self.position = old_position
+        # X 轴单独检测：碰墙只阻止 X 方向，Y 方向不受影响
+        if dx != 0:
+            old_x = self.position.x
+            self.position.x += dx
             self.hitbox = self._make_hitbox()
+            self._clamp_hitbox_to_map(map_size)
+            self.hitbox = self._make_hitbox()
+            if self._collides(obstacle_rects):
+                self.position.x = old_x
+
+        # Y 轴单独检测：碰墙只阻止 Y 方向，X 方向不受影响
+        if dy != 0:
+            old_y = self.position.y
+            self.position.y += dy
+            self.hitbox = self._make_hitbox()
+            self._clamp_hitbox_to_map(map_size)
+            self.hitbox = self._make_hitbox()
+            if self._collides(obstacle_rects):
+                self.position.y = old_y
+
+        self.hitbox = self._make_hitbox()
 
     def _collides(self, obstacle_rects):
         return any(self.hitbox.colliderect(rect) for rect in obstacle_rects)

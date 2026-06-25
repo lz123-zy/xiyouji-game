@@ -1,3 +1,4 @@
+"""场景管理器：加载并切换三个游戏场景（村庄、郊外、观音院），管理 NPC 和怪物列表。"""
 from pathlib import Path
 
 import pygame

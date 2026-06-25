@@ -1,3 +1,4 @@
+"""游戏状态枚举：定义所有可能的游戏状态，供 game.py 状态机使用。"""
 from enum import Enum, auto
 
 

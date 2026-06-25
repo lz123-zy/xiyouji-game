@@ -1,3 +1,4 @@
+"""TMX 地图加载器：解析 Tiled 编辑器导出的 .tmx 文件，渲染瓦片地图并提取障碍物碰撞矩形。"""
 import math
 
 import pygame

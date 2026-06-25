@@ -1,3 +1,4 @@
+"""对话框渲染器：绘制 NPC 对话气泡框，支持名字显示和文字自动换行。"""
 import pygame
 
 from .settings import DIALOG_IMAGE_PATH

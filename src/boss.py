@@ -1,3 +1,4 @@
+"""Boss（牛魔王）：继承 Monster，增加狂暴机制（HP<50% 时攻击力和攻速大幅提升）。"""
 from .monster import Monster
 from .settings import (
     BOSS_ATTACK_COOLDOWN,

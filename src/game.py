@@ -1,5 +1,5 @@
+"""主控制器：游戏循环、状态机、事件分发、场景切换，串联所有子模块的核心文件。"""
 import pygame
-
 from .audio import AudioManager
 from .battle import Battle
 from .boss import Boss
@@ -195,6 +195,7 @@ class Game:
             self.screen = pygame.display.set_mode(WINDOW_SIZE)
 
     def run(self):
+        """游戏主循环：每帧执行 事件处理→逻辑更新→画面渲染。"""
         while self.running:
             dt = self.clock.tick(FPS) / 1000
             self._handle_events()
@@ -204,6 +205,7 @@ class Game:
         pygame.quit()
 
     def _handle_events(self):
+        """事件分发：根据当前游戏状态将键盘事件分发给对应处理函数。"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -337,6 +339,7 @@ class Game:
         self._sync_state()
 
     def _handle_interact(self):
+        """交互处理：按E/空格时，优先推进对话，否则尝试场景切换或NPC交互。"""
         if self.active_npc:
             self._advance_dialog()
             return
@@ -483,6 +486,7 @@ class Game:
         )
 
     def _update(self, dt):
+        """逻辑更新：暂停/战斗/叙事时冻结，否则更新场景NPC、怪物AI和玩家移动。"""
         if self.state in (GameState.START, GameState.HELP, GameState.PAUSED):
             return
 
@@ -516,6 +520,7 @@ class Game:
         self._sync_state()
 
     def _update_battle_trigger(self):
+        """战斗触发检测：玩家碰触怪物时自动进入战斗（仅观音院场景）。"""
         if self.scene.name != "temple":
             return
 
@@ -544,12 +549,15 @@ class Game:
                 break
 
     def _check_final_completion(self):
+        """剧情检查：怪物全灭时召唤Boss，Boss击败后触发降妖结算画面。"""
         if self.narrative_visible or self.complete_message_visible:
             return
         if self.scene.name == "temple" and not self.scene.active_monsters:
             if not self.scene.boss_spawned:
                 self._spawn_boss()
             elif not self.quest.should_return_to_village:
+                self.quest.clear_monsters()
+                NPC.boss_defeated = True
                 self.narrative_visible = True
             else:
                 self.quest.clear_monsters()
@@ -571,6 +579,7 @@ class Game:
             print(f"Boss animation load failed for {state_name}, using fallback: {error}")
 
     def _sync_state(self):
+        """状态同步：根据当前游戏变量（战斗、任务、对话等）自动设置 GameState。"""
         if self.failure_message_visible:
             self.state = GameState.FAILED
         elif self.complete_message_visible or self.quest.is_complete:
@@ -589,6 +598,7 @@ class Game:
             self.state = GameState.TEMPLE_EXPLORING
 
     def _draw(self):
+        """画面渲染：按层级绘制地图→角色→对话框→战斗→UI覆盖层。"""
         if self.state == GameState.START:
             self.ui.draw_start(self.screen)
             pygame.display.flip()

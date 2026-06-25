@@ -1,3 +1,4 @@
+"""任务状态机：管理主线任务 5 个阶段的推进，驱动 NPC 对话随剧情变化。"""
 from enum import Enum, auto
 
 

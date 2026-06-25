@@ -1,3 +1,4 @@
+"""回合制战斗系统：战斗面板绘制、双方血条、攻击动画、怪物自动反击、胜负判定。"""
 import pygame
 
 from .settings import (
